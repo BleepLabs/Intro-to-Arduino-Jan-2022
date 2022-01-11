@@ -14,7 +14,7 @@
 int led_state = 0;  //you can set things equal to what ever you want...
 unsigned long current_time; //this will default to 0
 unsigned long prev_time;
-int period = 100;
+int period = 500;
 int led_pin = 12;
 int button_pin = 5;
 int button_reading;
