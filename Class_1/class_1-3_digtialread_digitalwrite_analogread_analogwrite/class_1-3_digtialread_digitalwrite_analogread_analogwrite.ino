@@ -3,8 +3,10 @@
 // More info on the functions and more at https://www.arduino.cc/reference/en/
 // Diagram of the teeny 3.2 pins https://www.pjrc.com/teensy/card7a_rev1.png
 
-// declaration section int led_state = 0;
 
+// declaration section 
+
+int led_state = 0;
 unsigned long current_time;
 unsigned long prev_time;
 unsigned long prev_time2;
