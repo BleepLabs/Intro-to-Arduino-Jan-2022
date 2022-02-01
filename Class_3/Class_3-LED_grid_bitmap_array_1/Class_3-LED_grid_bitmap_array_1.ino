@@ -35,7 +35,7 @@ int bitmap1[8][8] = {
   {0, 0, 0, 1, 1, 0, 0, 0},
   {0, 1, 0, 1, 1, 0, 1, 0},
   {0, 0, 1, 1, 1, 1, 0, 0},
-  {1, 0, 0, 1, 1, 0, 0, 1},
+  {0, 0, 0, 1, 1, 0, 0, 1},
   {0, 0, 0, 1, 1, 0, 0, 0},
   {0, 0, 0, 1, 1, 0, 0, 0},
 };
@@ -108,10 +108,10 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
-//        if (y_count == 2) {
-//          float hue1 = rainbow1 / 14.0;
-//          set_pixel(xy_count, hue1, .9, 1);
-//        }
+        //        if (y_count == 2) {
+        //          float hue1 = rainbow1 / 14.0;
+        //          set_pixel(xy_count, hue1, .9, 1);
+        //        }
 
         if (xy_count == xy_sel) {
           set_hue = .4;
@@ -119,9 +119,10 @@ void loop() {
         }
 
         if (bitmap1[y_count][x_count] == 1) {
-          float r1 = random(20)/40.0;
+          float r1 = random(20) / 40.0;
           set_pixel(xy_count, r1 , 1, 1);
         }
+
 
       }
     }
