@@ -25,6 +25,9 @@ int xy_sel;
 int xy_count;
 int x_pot;
 int y_pot;
+int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
+int rainbow1;
+int test2;
 
 void setup() {
   leds.begin(); //must be done in setup for the LEDs to work.
@@ -36,8 +39,36 @@ void setup() {
 void loop() {
   current_time = millis();
 
+  if (current_time - prev[1] > 100) { //33 millis is about 30Hz, aka fps
+    prev[1] = current_time;
+
+    rainbow1++;
+    if (rainbow1 > 7) {
+      rainbow1 = 0;
+    }
+
+    for (int m = 0; m < 8; m++) {
+      test2++;
+      if (test2 > 7) {
+        test2 = 0;
+      }
+    }
+
+
+
+  }
+
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
+
+    if (0) {
+      for (int j = 0; j < 8; j++) {
+        Serial.println(a1[j]);
+      }
+      Serial.println("done! ");
+      Serial.println();
+    }
+
 
     //its better to not put analogRead in the "bottom" of the loop
     // reading it more slowly will give less noise and we only need
@@ -46,6 +77,7 @@ void loop() {
     x_pot = map(analogRead(A0), 0, 1023, 0, 7); //map to just 0-7 to select the column...
     y_pot = map(analogRead(A1), 0, 1023, 0, 7); //..and row
     xy_sel = x_pot + (y_pot * 8); //both of these are combined to set the exact pixel from 0-63
+
     Serial.println(xy_sel);
 
     //x_count goes from 0-7 and so does y_count but since we have it arranged
@@ -65,13 +97,18 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
+        if (y_count == 2) {
+          float hue1 = rainbow1 / 14.0;
+          set_pixel(xy_count, hue1, .9, 1);
+        }
+
         if (xy_count == xy_sel) {
           set_hue = .4;
           set_pixel(xy_sel, set_hue , .9, 1);
         }
       }
-      leds.show(); // after we've set what we want all the LEDs to be we send the data out through this function
     }
+    leds.show(); // after we've set what we want all the LEDs to be we send the data out through this function
   }
 
 }// loop is over
