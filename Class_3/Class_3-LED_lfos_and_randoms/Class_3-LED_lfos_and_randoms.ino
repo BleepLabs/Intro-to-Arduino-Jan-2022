@@ -1,4 +1,5 @@
-// Addressing the XY grid
+//LFOs here mean values that change slowly and are used to
+// modify things such as color or position
 
 //This first block is all copy-paste and can be left alone except for brightness it just sets up the library
 
@@ -56,7 +57,11 @@ void loop() {
   if (current_time - prev[3] > rate[0]) {
     prev[3] = current_time;
 
+    //if it's 96 97 98 or 99 flip the latch no matter what the lfo[1] value is
     if (random(100) > 95) {
+      // "!" is opposite and works on values that are 0 or 1
+      // the latch is equal to the opposite of latch
+      // simpler version of how we toggled the led in class 1
       lfo_latch[1] = !lfo_latch[1];
     }
 
@@ -80,11 +85,15 @@ void loop() {
   if (current_time - prev[2] > rate[0]) {
     prev[2] = current_time;
 
+    //increase the value if the latch is 1 and decrease if 0
+    // if the value hits the top or bottom we've picked arbitrarily,
+    // keep it from going past taht number and change direction
+
     if (lfo_latch[0] == 1) {
-      lfo[0] += 4; //lfo[0]=lfo[0]+2;
+      lfo[0] += 4; //same as lfo[0]=lfo[0]+4;
     }
     if (lfo_latch[0] == 0) {
-      lfo[0] -= 3; //lfo[0]=lfo[0]-1;
+      lfo[0] -= 3; //same as lfo[0]=lfo[0]-3;
     }
     if (lfo[0] < 0) {
       lfo[0] = 0;
@@ -137,23 +146,27 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, lfo[1] / 99.0); // turn everything off. otherwise the last "frame" swill still show
 
-        //        if (y_count == 2) {
-        //          float hue1 = rainbow1 / 14.0;
-        //          set_pixel(xy_count, hue1, .9, 1);
-        //        }
+        if (0) { //won't happen unless it's "1"
+          if (y_count == 2) { // light up an entire row
+            float hue1 = rainbow1 / 14.0;
+            set_pixel(xy_count, hue1, .9, 1);
+          }
+        }
 
         if (xy_count == xy_sel) {
           set_hue = .4;
+          //always use "xy_count" as the pixel to address in the x_count y_count fors
           set_pixel(xy_count, set_hue , .9, 1);
         }
 
         if (bitmap1[y_count][x_count] == 1 ) {
-          float hue3 = (x_count) / 15.0;
-          set_pixel(xy_count, hue3 , 1, .2);
+          float hue = (x_count) / 15.0; //this is a local variable. If only exists in these {} so we can't use it anywhere else
+          set_pixel(xy_count, hue , 1, .2);
         }
+        
         if (bitmap1[y_count][x_count] == 2 ) {
-
-          set_pixel(xy_count, .7 , lfo[0] / 99.0, 1);
+          float saturation = lfo[0] / 99.0
+          set_pixel(xy_count, .7 , saturation, 1);
         }
       }
     }

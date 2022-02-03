@@ -1,4 +1,5 @@
-// Drawing linese and shapes with custom functions 
+// Using LFOs to animate the lines and shapes 
+
 
 
 //This first block is all copy-paste and can be left alone except for brightness it just sets up the library
@@ -100,7 +101,7 @@ void loop() {
 
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
-        if (1) { //same as if 1==1. It will happen
+        if (1) { 
           // Will return a 1 if there is a line at that point devined by the parameters
           // maskLine(pixel selected, First x, first y, destination x, destination y)
           if (maskLine(xy_count, x_pot, y_pot, lfo[0], lfo[1])) {
@@ -108,7 +109,7 @@ void loop() {
           }
         }
         
-        if (1) { //same as if 0==1. It will NOT happen 
+        if (1) { 
           //Make a triangle from three points
           if (maskTriangle(xy_count, lfo[0], y_pot, 7, 7,  0, 7)) {
             set_pixel(xy_count, xy_count / 64.0 , 1, 1);

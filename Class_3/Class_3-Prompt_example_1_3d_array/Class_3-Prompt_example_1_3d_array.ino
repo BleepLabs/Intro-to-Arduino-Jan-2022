@@ -1,12 +1,4 @@
-/*
-  draw a lil firework
-
-  1 press button dot goes up
-  2 dot turns to bitmap
-  3 bitmap is stepped through, as in 0 1 2 3
-
-
-*/
+// Using an array for 2d bitmaps
 
 //This first block is all copy-paste and can be left alone except for brightness it just sets up the library
 
@@ -33,79 +25,80 @@ int xy_sel;
 int xy_count;
 int x_pot;
 int y_pot;
-int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
 int rainbow1;
-int test2;
+int frame;
 
-int bitmap1[8][8] = {
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
+//This array has three dimentions
+// the first vale us which array, then it's y then it's x
+int bitmap1[4][8][8] = {
+  {
+    {0, 0, 0, 1, 1, 0, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 1, 1, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+  },
+  {
+    {0, 0, 1, 1, 1, 0, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 1, 1, 0, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 1, 1, 0, 0, 0},
+  },
+  {
+    {0, 0, 0, 1, 1, 0, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 0, 1, 1, 0, 0, 0},
+  },
+  {
+    {0, 0, 1, 2, 1, 0, 0, 0},
+    {0, 0, 2, 0, 0, 2, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 2, 0, 0, 2, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 2, 0, 0, 2, 0, 0},
+    {0, 0, 1, 0, 0, 1, 0, 0},
+    {0, 0, 2, 1, 2, 0, 0, 0},
+  },
 };
-int button_pin = 0;
-int button_read;
-int prev_button_read;
-int mode = 0;
-int dot_position = 0;
-int dot_xy;
-int expolosion_timeout;
 
 void setup() {
   leds.begin(); //must be done in setup for the LEDs to work.
-  pinMode(button_pin, INPUT_PULLUP);
+
   analogReadAveraging(64);  //smooth the readings so they jump around less
 }
 
 
 void loop() {
   current_time = millis();
-  prev_button_read = button_read;
-  button_read = digitalRead(button_pin);
 
-  if (prev_button_read == 1 && button_read == 0) {
-    mode = 1;
-  }
-
-  //When the mode is 2, get some a random number from 0-63
-  // increment expolosion_timeout and once it gets over 16
-  // Reset all the variables were using to 0 and go to mode 0 
-  if (current_time - prev[2] > 50) {
-    prev[2] = current_time;
-    if (mode == 2) {
-      dot_position = random(64);
-      expolosion_timeout++;
-      if (expolosion_timeout > 16) {
-        mode = 0;
-        expolosion_timeout = 0;
-        dot_position = 0;
-      }
-    }
-  }
-
-  //when mode is 1 increment a variable untill it's over 4 then
-  // make it 0 again and cahnge the mode to 2
-  if (current_time - prev[1] > 150) {
+  if (current_time - prev[1] > 500) {
     prev[1] = current_time;
-    if (mode == 1) {
-      dot_position++;
-      if (dot_position > 4) {
-        dot_position = 0;
-        mode = 2;
-      }
+
+    frame++;
+    if (frame > 3) {
+      frame = 0;
     }
   }
-
-
 
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
-    //pots aren't being used 
+
+    //its better to not put analogRead in the "bottom" of the loop
+    // reading it more slowly will give less noise and we only need
+    // to update it when we'd see the change it causes anyway
     x_pot = map(analogRead(A0), 0, 1023, 0, 7); //map to just 0-7 to select the column...
     y_pot = map(analogRead(A1), 0, 1023, 0, 7); //..and row
     xy_sel = x_pot + (y_pot * 8); //both of these are combined to set the exact pixel from 0-63
@@ -114,28 +107,19 @@ void loop() {
       for ( int y_count = 0; y_count < 8; y_count++) {
         xy_count = x_count + (y_count * 8); //goes from 0-63
 
-        //If the mode doesnot equal to 2, clear the screen
-        // this means in mode 2 those random numbers we pick to turn on LEDS
-        // will stay on
-        if (mode != 2) {
-          set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
+        set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
+
+
+        if (bitmap1[frame][y_count][x_count] == 1 ) {
+          float hue = y_count / 7.0;
+          set_pixel(xy_count, hue , 1, 1);
+        }
+        if (bitmap1[frame][y_count][x_count] == 2 ) {
+          float r1 = random(20) / 40.0;
+          set_pixel(xy_count, r1 , 1, 1);
         }
 
-        if (mode == 1) {
-          //dot position just goes from 0-4. This would get displayed as a pixel
-          // lighting up in the top left corner and moving right.
-          // I want it coming from the bottom going up
-          // "dot_position * 8" makes it move down instead of right as moving up by 8 means youre going in the y axis
-          // "63 -" flips it so now it will go up. there are 63 LEDs so subracting the highest nuber from waht we have will flip it around the y axis 
-          // "4 +" shift it 4 pixels to the right in the x axis
-          dot_xy = 4 + (63 - (dot_position * 8));
-          set_pixel(dot_xy, 0, 0, 1);
-        }
-        
-        if (mode == 2) {
-          float hue_explode = random(50) / 500.0; //we want a result that is between 0-1.0
-          set_pixel(dot_position, hue_explode, 1, 1);
-        }
+
       }
     }
     leds.show(); // after we've set what we want all the LEDs to be we send the data out through this function

@@ -1,4 +1,4 @@
-// Drawing linese and shapes with custom functions 
+// Drawing lines and shapes with custom functions 
 
 
 //This first block is all copy-paste and can be left alone except for brightness it just sets up the library
@@ -60,21 +60,22 @@ void loop() {
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
         if (1) { //same as if 1==1. It will happen
-          
           // Will return a 1 if there is a line at that point devined by the parameters
-          // maskLine(pixel selected, First x, first y, destination x, destinationy)
+          // maskLine(pixel selected, First x, first y, destination x, destination y)
           if (maskLine(xy_count, x_pot, y_pot, 7, 7)) {
             set_pixel(xy_count, y_count / 64.0 , 1, 1);
           }
         }
         if (0) { //same as if 0==1. It will NOT happen 
           //Make a triangle from three points
+          //maskTriangle(pixel selected, First x, first y, 2nd x, 2nd y, 3rd x, 3rd y)
           if (maskTriangle(xy_count, x_pot, y_pot, 7, 7, 0, 7)) {
             set_pixel(xy_count, xy_count / 64.0 , 1, 1);
           }
         }
         if (0) {
           //make a four lines based on four points
+          //maskTriangle(pixel selected, First x, first y, 2nd x, 2nd y, 3rd x, 3rd y,4th x,4th y)
           if (maskPolygon(xy_count, 1 + x_pot, 1 + y_pot,  6 - x_pot, 1 - y_pot,  6 + x_pot, 6 + y_pot,  1 - x_pot, 6 - y_pot)) {
             set_pixel(xy_count, xy_count / 64.0 , 1, 1);
           }

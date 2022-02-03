@@ -29,6 +29,7 @@ int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
 int rainbow1;
 int test2;
 
+//This array has two dimentions, allowing us to easily store a map of bits we want to dosplay
 int bitmap1[8][8] = {
   {0, 0, 0, 1, 1, 0, 0, 0},
   {0, 0, 0, 1, 1, 0, 0, 0},
@@ -57,22 +58,13 @@ void loop() {
     if (rainbow1 > 7) {
       rainbow1 = 0;
     }
-
-    for (int m = 0; m < 8; m++) {
-      test2++;
-      if (test2 > 7) {
-        test2 = 0;
-      }
-    }
-
-
-
   }
 
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
-    if (0) {
+    if (0) { //This won't happen
+      //Example of a for loop
       for (int j = 0; j < 8; j++) {
         Serial.println(a1[j]);
       }
@@ -108,18 +100,15 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
-        //        if (y_count == 2) {
-        //          float hue1 = rainbow1 / 14.0;
-        //          set_pixel(xy_count, hue1, .9, 1);
-        //        }
-
         if (xy_count == xy_sel) {
           set_hue = .4;
           set_pixel(xy_count, set_hue , .9, 1);
         }
 
+        //use the y and x_count to go therough the x and y dimentions of the bitmap
+        // and check if there is a 1 there 
         if (bitmap1[y_count][x_count] == 1) {
-          float r1 = random(20) / 40.0;
+          float r1 = random(20) / 40.0; 
           set_pixel(xy_count, r1 , 1, 1);
         }
 
