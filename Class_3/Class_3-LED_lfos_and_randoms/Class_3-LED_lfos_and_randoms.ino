@@ -165,7 +165,7 @@ void loop() {
         }
         
         if (bitmap1[y_count][x_count] == 2 ) {
-          float saturation = lfo[0] / 99.0
+          float saturation = lfo[0] / 99.0;
           set_pixel(xy_count, .7 , saturation, 1);
         }
       }
