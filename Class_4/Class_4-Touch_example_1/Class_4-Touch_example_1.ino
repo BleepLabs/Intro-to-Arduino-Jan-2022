@@ -30,9 +30,10 @@ int rainbow1;
 int test2;
 int touch1;
 int touch_low = 1100; //these are values you need to find
-int touch_high = 8000;
+int touch_high = 7000;
 float touch_brightness;
 int touch_level;
+int touch_pin = 0;
 
 void setup() {
   leds.begin(); //must be done in setup for the LEDs to work.
@@ -47,7 +48,7 @@ void loop() {
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
-    touch1 = touchRead(0);
+    touch1 = touchRead(touch_pin);
 
     touch_brightness = map(touch1, touch_low, touch_high, 0, 100) / 100.0;
     touch_level = map(touch1, touch_low, touch_high, 8 , 0);
