@@ -1,6 +1,13 @@
 // Getting started with audio
 //Bounce2 library must be installed.
 
+/*
+pots:
+drum pitch     feedback amount      master volume
+      waveform pitch        filter freqeuncy 
+ */ 
+
+
 //This block is coped from the tool
 // https://www.pjrc.com/teensy/gui/
 
@@ -158,7 +165,7 @@ void loop() {
 
   //since we can hear faster than we can see (?) we want to update these much more quickly
   // so they are not in the timing if. We'll talk about ways to smooth the readings later
-  drum1_freq = analogRead(A0);
+  drum1_freq = analogRead(A0); //0-1023
   drum2_freq = drum1_freq * 2.0;
 
   drum1.frequency(drum1_freq);
