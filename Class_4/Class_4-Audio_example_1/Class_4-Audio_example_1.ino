@@ -1,5 +1,5 @@
 // Getting started with audio
-//Bounce2 library must be installed. 
+//Bounce2 library must be installed.
 
 //This block is coped from the tool
 // https://www.pjrc.com/teensy/gui/
@@ -97,7 +97,8 @@ void setup() {
 
   // begin(volume from 0.0-1.0 , frequency , shape of oscillator)
   //https://www.pjrc.com/teensy/gui/?info=AudioSynthWaveform
-  waveform1.begin(1, 440.0, WAVEFORM_BANDLIMIT_SAWTOOTH);
+  waveform1.begin(1, 440.0, WAVEFORM_SAWTOOTH);
+  //waveform1.begin(1, 440.0, WAVEFORM_BANDLIMIT_SAWTOOTH);
 
   //https://www.pjrc.com/teensy/gui/?info=AudioFilterStateVariable
   filter1.frequency(1000.0);
@@ -105,7 +106,7 @@ void setup() {
 
   //https://www.pjrc.com/teensy/gui/?info=AudioSynthSimpleDrum
   drum1.frequency(880);
-  drum1.length(250); //length of sound in ms
+  drum1.length(2000); //length of sound in ms
   drum1.pitchMod(.9); //Values above 0.5 cause the pitch to sweep downwards, values lower than 0.5 cause the pitch to sweep upwards.
 
   drum2.frequency(220);
@@ -172,17 +173,18 @@ void loop() {
   amp1.gain(final_output_level);
 
   wave1_freq = analogRead(A3) * 3.0;
+  //wave1_freq = map(touchRead(0), 1000, 8000, 0, 2500);
   waveform1.frequency(wave1_freq);
 
   filter1_freq = analogRead(A4) * 4.0;
   filter1.frequency(filter1_freq);
 
   //tuen the wavefrom off basically if the filter is low
-  if (filter1_freq < 100){
-    mixer1.gain(2, 0); 
+  if (filter1_freq < 100) {
+    mixer1.gain(2, 0);
   }
-  else{
-    mixer1.gain(2, .2); 
+  else {
+    mixer1.gain(2, .2);
   }
 
 
@@ -201,10 +203,6 @@ void loop() {
 
   if (current_time - prev[1] > 500) {
     prev[1] = current_time;
-
-    Serial.println(wave1_gain);
-    Serial.println(final_output_level);
-    Serial.println(feedback_amount);
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.
     // If you're using too many block, jut increase the number up top until you're over it by a couple
