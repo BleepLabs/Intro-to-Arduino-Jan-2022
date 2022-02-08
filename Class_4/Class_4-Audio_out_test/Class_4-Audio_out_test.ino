@@ -17,12 +17,12 @@ unsigned long prev[8]; //array of 8 variables named "prev"
 
 void setup() {
   AudioMemory(100);
-  waveform1.begin(1, 440.0, WAVEFORM_SINE);
+  waveform1.begin(.5, 440.0, WAVEFORM_SINE);
 }
 
 void loop() {
   current_time = millis();
-  if (current_time - prev[1] > 500) {
+    if (current_time - prev[1] > 500) {
     prev[1] = current_time;
 
     //Here we print out the usage of the audio library
