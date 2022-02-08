@@ -28,6 +28,11 @@ int y_pot;
 int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
 int rainbow1;
 int test2;
+int touch1;
+int touch_low = 1100; //these are values you need to find
+int touch_high = 8000;
+float touch_brightness;
+int touch_level;
 
 void setup() {
   leds.begin(); //must be done in setup for the LEDs to work.
@@ -42,6 +47,10 @@ void loop() {
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
+    touch1 = touchRead(0);
+
+    touch_brightness = map(touch1, touch_low, touch_high, 0, 100) / 100.0;
+    touch_level = map(touch1, touch_low, touch_high, 8 , 0);
     //its better to not put analogRead in the "bottom" of the loop
     // reading it more slowly will give less noise and we only need
     // to update it when we'd see the change it causes anyway
@@ -50,7 +59,7 @@ void loop() {
     y_pot = map(analogRead(A1), 0, 1023, 0, 7); //..and row
     xy_sel = x_pot + (y_pot * 8); //both of these are combined to set the exact pixel from 0-63
 
-    Serial.println(xy_sel);
+    Serial.println(touch1);
 
     //x_count goes from 0-7 and so does y_count but since we have it arranged
     // with one for loop inside another we get x_count=0 for y_count from 0-7,
@@ -69,9 +78,13 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
+        if (y_count >= touch_level) {
+          set_pixel(xy_count, y_count / 10.0 , .9, touch_brightness);
+        }
+
         if (xy_count == xy_sel) {
           set_hue = .4;
-          set_pixel(xy_sel, set_hue , .9, 1);
+          //set_pixel(xy_sel, set_hue , .9, 1);
         }
       }
     }
