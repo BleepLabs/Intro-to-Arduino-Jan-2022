@@ -48,6 +48,7 @@ float save_hue;
 int cursor_blink;
 int erase_pixel;
 int shake;
+int shake_latch;
 unsigned long shake_time;
 
 void setup() {
@@ -86,22 +87,32 @@ void loop() {
 
   if (debouncer3.fell()) {
     shake_time = current_time;
+    shake_latch = 1;
   }
+
   if (debouncer3.rose()) {
-    shake_time = 0;
+    shake_latch = 0;
   }
 
   if (debouncer3.read() == 0) {
-    if (current_time - shake_time > 2000) {
-      shake = 1;
-      Serial.println("a");
-
+    if (current_time - shake_time > 1000) {
+      if (shake_latch == 1) {
+        shake = 1;
+        Serial.println("a");
+      }
     }
   }
 
   if (shake == 1) {
     Serial.println("SHAKE!");
     shake = 0;
+    shake_latch = 0;
+
+    for (int x = 0; x < 8; x++) {
+      for (int y = 0; y < 8; y++) {
+        bank1[y][x] = 0;
+      }
+    }
   }
 
   if (save == 1) {
