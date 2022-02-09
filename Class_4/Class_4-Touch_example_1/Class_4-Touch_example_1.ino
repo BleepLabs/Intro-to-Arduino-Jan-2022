@@ -1,6 +1,9 @@
-// Addressing the XY grid
+// Using a touch sensor in pin 0
+// max_brightness has been increased to .25
 
-//This first block is all copy-paste and can be left alone except for brightness it just sets up the library
+
+
+// This first block is all copy-paste and can be left alone except for brightness it just sets up the library
 
 //led biz begin
 #include <WS2812Serial.h>
@@ -14,7 +17,7 @@ WS2812Serial leds(num_of_leds, displayMemory, drawingMemory, pin, WS2812_GRB);
 
 //1.0 is VERY bright if you're powering it off of 5V
 // this needs to be declared and set to something >0 for the LEDs to work
-float max_brightness = 0.1;
+float max_brightness = 0.25;
 //led biz end
 
 unsigned long current_time;
@@ -29,8 +32,8 @@ int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
 int rainbow1;
 int test2;
 int touch1;
-int touch_low = 1100; //these are values you need to find
-int touch_high = 7000;
+int touch_low = 800; //these are values you need to find
+int touch_high = 5000;
 float touch_brightness;
 int touch_level;
 int touch_pin = 0;
@@ -48,13 +51,13 @@ void loop() {
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
-    touch1 = touchRead(touch_pin);
+    touch1 = touchRead(touch_pin); //use pin 0 or 1
+    //touch_low and touch_high are found but looking at the serial monitor to see what
+    // values it gives where you are and aren't touching it
+    // you can turn the serial monitor autoscoll off so the numbers aren't jsut streaming by
 
-    touch_brightness = map(touch1, touch_low, touch_high, 0, 100) / 100.0;
-    touch_level = map(touch1, touch_low, touch_high, 8 , 0);
-    //its better to not put analogRead in the "bottom" of the loop
-    // reading it more slowly will give less noise and we only need
-    // to update it when we'd see the change it causes anyway
+    touch_brightness = map(touch1, touch_low, touch_high, 0, 100) / 100.0;// map can't do floats so this gives 0-1.0
+    touch_level = map(touch1, touch_low, touch_high, 8 , 0); //going to 8 is an easy way to not show anything as there is no row 8. with 7 you might see the bottom row
 
     x_pot = map(analogRead(A0), 0, 1023, 0, 7); //map to just 0-7 to select the column...
     y_pot = map(analogRead(A1), 0, 1023, 0, 7); //..and row
@@ -79,18 +82,29 @@ void loop() {
         // value - 0 is off, 1 is the value set by max_brightness
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
-        if (y_count >= touch_level) {
-          set_pixel(xy_count, y_count / 10.0 , .9, touch_brightness);
+        //light up the rows that are larger than the touch level. The top row is 0 and bottom is 7
+        if (1) { //this will happen
+          //draw lines coming from the bottom 
+          if (y_count >= touch_level) {
+            float hue = y_count / 10.0; //each row will be a diff color
+            set_pixel(xy_count, hue , .9, touch_brightness);
+          }
         }
 
-        if (xy_count == xy_sel) {
-          set_hue = .4;
-          //set_pixel(xy_sel, set_hue , .9, 1);
+        if (0) { //this will NOT happen
+          //draw the levels starting in the bottm rihgt corner 
+          int touch_level_x = touch_level - x_count;
+          if (y_count >= touch_level_x) {
+            float hue = x_count / .7; //divide by less than 7, the number of rows, and you get repeating patterns
+            set_pixel(xy_count, hue , .9, touch_brightness);
+          }
         }
+
       }
     }
+
     leds.show(); // after we've set what we want all the LEDs to be we send the data out through this function
-  }
+  }//timing if over
 
 }// loop is over
 
