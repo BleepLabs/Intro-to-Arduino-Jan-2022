@@ -1,5 +1,5 @@
 /*
-  A tiny etch a sketch taht can draw random lines
+  A tiny etch a sketch that can draw random lines
 
   Top row of pots: x position, y position, color
   button on pin 2 - Save the current position and color to array
@@ -7,16 +7,18 @@
   button on pin 4 - hold for two seconds to clear screen
   button on pin 6 (not installed in class) - daw a random line
 
-  This has been simplified from the version in calss and combined with the rando code
+  This has been simplified from the version in class and combined
+  with the rando code
 
-  Shake_mode increments from 0 to 3 depending on the button
-  goes to 1 when it falls
-  2 after it's held for 2 seconds
-  in mode 2 it does the animation
-  once the anaimatin is done mode 3 clears the bank
-  and then it returns to 0 
+  Shake_mode increments from 0 to 3
 
-  
+  When button falls Shake_mode is set to 1
+  After two seconds of the button being held down it is set to two
+  As soon as it’s in mode 2 the animation is started.
+  The animation is done once shake_movement is >7 and the mode is set to 3
+  In mode 3 the bank is set to 0, all the variables used in this process are set to 0, and the mode returns to 0
+
+
 */
 
 
@@ -94,6 +96,7 @@ void setup() {
 
   analogReadAveraging(64);  //smooth the readings so they jump around less
 
+  //https://www.maximintegrated.com/en/design/technical-documents/app-notes/4/4400.html
   randomSeed(analogRead(A9)); //get an radnom analog reading to start the random algorhythm. This makes it so the rando() line will actaully be differnt each time it resets.
   rando(); //call the custom function that dras a random line in bank1
 }
@@ -101,11 +104,12 @@ void setup() {
 //void means it returns nothing
 void rando() {
   //get new random numbers, then compute the line in the two fors
+
+  float hue1 = random(100) / 99.0;
   int r1 = random(0, 8);
   int r2 = random(0, 8);
   int r3 = random(0, 8);
   int r4 = random(0, 8);
-  float hue1 = random(100) / 100.0;
 
   for ( int x_count = 0; x_count < 8; x_count++) {
     for ( int y_count = 0; y_count < 8; y_count++) {
@@ -118,6 +122,7 @@ void rando() {
 
     }
   }
+  
 }
 
 
@@ -167,10 +172,12 @@ void loop() {
   if (shake_mode == 2) {
     if (current_time - prev[2] > 100) {
       prev[2] = current_time;
+      
       shake_movement++; //increment ever 150 ms and go on to the next mode once we hit 8
       if (shake_movement > 7) {
         shake_mode = 3;
       }
+      
     }
   }
 
@@ -220,7 +227,6 @@ void loop() {
 
     save_hue = map(analogRead(A2), 0, 1023, 0, 100) / 100.0; //map can't do floats so this gives us 0-1.0
 
-
     for ( int x_count = 0; x_count < 8; x_count++) {
       for ( int y_count = 0; y_count < 8; y_count++) {
         xy_count = x_count + (y_count * 8); //goes from 0-63
@@ -232,7 +238,7 @@ void loop() {
           bank1_reading = bank1[y_count - shake_movement][x_count];
         }
         else {
-          //dispay the bank jsut as it is
+          //dispay the bank just as it is
           bank1_reading = bank1[y_count][x_count];
         }
 

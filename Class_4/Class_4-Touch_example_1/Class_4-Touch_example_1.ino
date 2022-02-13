@@ -1,8 +1,6 @@
 // Using a touch sensor in pin 0
 // max_brightness has been increased to .25
 
-
-
 // This first block is all copy-paste and can be left alone except for brightness it just sets up the library
 
 //led biz begin
@@ -32,8 +30,8 @@ int a1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
 int rainbow1;
 int test2;
 int touch1;
-int touch_low = 800; //these are values you need to find
-int touch_high = 5000;
+int touch_low = 1000; //these are values you need to find
+int touch_high = 6500;
 float touch_brightness;
 int touch_level;
 int touch_pin = 0;
@@ -48,6 +46,7 @@ void setup() {
 void loop() {
   current_time = millis();
 
+
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
@@ -57,13 +56,14 @@ void loop() {
     // you can turn the serial monitor autoscoll off so the numbers aren't jsut streaming by
 
     touch_brightness = map(touch1, touch_low, touch_high, 0, 100) / 100.0;// map can't do floats so this gives 0-1.0
+
     touch_level = map(touch1, touch_low, touch_high, 8 , 0); //going to 8 is an easy way to not show anything as there is no row 8. with 7 you might see the bottom row
 
     x_pot = map(analogRead(A0), 0, 1023, 0, 7); //map to just 0-7 to select the column...
     y_pot = map(analogRead(A1), 0, 1023, 0, 7); //..and row
     xy_sel = x_pot + (y_pot * 8); //both of these are combined to set the exact pixel from 0-63
 
-    Serial.println(touch1);
+    Serial.println(touch_level);
 
     //x_count goes from 0-7 and so does y_count but since we have it arranged
     // with one for loop inside another we get x_count=0 for y_count from 0-7,
@@ -83,16 +83,16 @@ void loop() {
         set_pixel(xy_count, 0, 0, 0); // turn everything off. otherwise the last "frame" swill still show
 
         //light up the rows that are larger than the touch level. The top row is 0 and bottom is 7
-        if (1) { //this will happen
-          //draw lines coming from the bottom 
+        if (0) { //this will happen
+          //draw lines coming from the bottom
           if (y_count >= touch_level) {
             float hue = y_count / 10.0; //each row will be a diff color
             set_pixel(xy_count, hue , .9, touch_brightness);
           }
         }
 
-        if (0) { //this will NOT happen
-          //draw the levels starting in the bottm rihgt corner 
+        if (1) { //this will NOT happen
+          //draw the levels starting in the bottm right corner
           int touch_level_x = touch_level - x_count;
           if (y_count >= touch_level_x) {
             float hue = x_count / .7; //divide by less than 7, the number of rows, and you get repeating patterns

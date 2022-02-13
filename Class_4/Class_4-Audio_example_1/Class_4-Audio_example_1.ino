@@ -5,12 +5,14 @@
 pots:
 drum pitch     feedback amount      master volume
       waveform pitch        filter freqeuncy 
+
+buttons:
+falling drum    rising drum   not used  not used
  */ 
 
 
 //This block is coped from the tool
 // https://www.pjrc.com/teensy/gui/
-
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -18,26 +20,23 @@ drum pitch     feedback amount      master volume
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform1;      //xy=80,335
-AudioSynthSimpleDrum     drum2;          //xy=160,262
-AudioSynthSimpleDrum     drum1;          //xy=176,220
-AudioFilterStateVariable filter1;        //xy=242,336
-AudioEffectDelay         delay1;         //xy=406,420
-AudioMixer4              mixer1;         //xy=419,268
-AudioAmplifier           amp1;           //xy=590,268
-AudioOutputAnalog        dac1;           //xy=732,268
+AudioSynthWaveform       waveform1;      //xy=141,269
+AudioFilterStateVariable filter1;        //xy=180,168
+AudioSynthSimpleDrum     drum1;          //xy=181,50
+AudioSynthSimpleDrum     drum2;          //xy=199,102
+AudioEffectDelay         delay1;         //xy=418,233
+AudioMixer4              mixer1;         //xy=425,115
+AudioAmplifier           amp1;           //xy=642,127
+AudioOutputAnalog        dac1;           //xy=791,155
 AudioConnection          patchCord1(waveform1, 0, filter1, 0);
-AudioConnection          patchCord2(drum2, 0, mixer1, 1);
+AudioConnection          patchCord2(filter1, 0, mixer1, 2);
 AudioConnection          patchCord3(drum1, 0, mixer1, 0);
-AudioConnection          patchCord4(filter1, 0, mixer1, 2);
+AudioConnection          patchCord4(drum2, 0, mixer1, 1);
 AudioConnection          patchCord5(delay1, 0, mixer1, 3);
 AudioConnection          patchCord6(mixer1, delay1);
 AudioConnection          patchCord7(mixer1, amp1);
 AudioConnection          patchCord8(amp1, dac1);
 // GUItool: end automatically generated code
-
-//AudioConnection          patchCord8(waveform1, dac1);
-
 
 
 //led biz begin
@@ -93,9 +92,9 @@ void setup() {
   //there's a lot we need to do in setup now but most of it is just copy paste.
   // This first group should only be done in setup how much RAM to set aside for the audio library to use.
   // The audio library uses blocks of a set size so this is not a percentage or kilobytes, just a kind of arbitrary number.
-  // On our Teensy 3.1 we can go up to about 200 but that won't leave any RAM for anyone else.
+  // On our Teensy 3.2 we can go up to about 200 but that won't leave any RAM for anyone else.
   // Most objects only need a single block. It's usually the delay and reverb that hog it.
-  AudioMemory(100);
+  AudioMemory(150);
 
   //Next we setup the audio objects
   // We start by writing the object we want, then a period, then the function
@@ -129,7 +128,7 @@ void setup() {
   // these only equal .8 in total gain but since there's feedback we wan't to be cautious
 
   //https://www.pjrc.com/teensy/gui/?info=AudioEffectDelay
-  delay1.delay(0, 200); //channel, delay time in ms
+  delay1.delay(0, 300); //channel, delay time in ms
 
   pinMode(button1_pin, INPUT_PULLUP);
   debouncer1.attach(button1_pin);
@@ -173,7 +172,7 @@ void loop() {
 
   //map can't do floats (some versions of arduino can) so we divide by 100.0
 
-  feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0;
+  feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
   mixer1.gain(3, feedback_amount); //delay feedback
 
   final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
@@ -186,7 +185,7 @@ void loop() {
   filter1_freq = analogRead(A4) * 4.0;
   filter1.frequency(filter1_freq);
 
-  //tuen the wavefrom off basically if the filter is low
+  //turn the wavefrom off basically if the filter is low
   if (filter1_freq < 100) {
     mixer1.gain(2, 0);
   }
