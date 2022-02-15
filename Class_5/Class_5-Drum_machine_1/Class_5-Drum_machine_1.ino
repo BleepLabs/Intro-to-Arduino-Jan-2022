@@ -13,7 +13,6 @@
 
 //This block is coped from the tool
 // https://www.pjrc.com/teensy/gui/#include
-
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -21,26 +20,36 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform1;      //xy=121,376
-AudioSynthSimpleDrum     drum2;          //xy=141,151
-AudioFilterStateVariable filter1;        //xy=181,272
-AudioSynthSimpleDrum     drum1;          //xy=198,104
-AudioEffectEnvelope      envelope1;      //xy=202,203
-AudioEffectDelay         delay1;         //xy=413,322
-AudioMixer4              mixer1;         //xy=420,158
-AudioAnalyzePeak         peak1;          //xy=655,106
-AudioAmplifier           amp1;           //xy=657,190
-AudioOutputAnalog        dac1;           //xy=839,217
+AudioSynthWaveform       waveform1;      //xy=91,87
+AudioFilterStateVariable filter1;        //xy=116,169
+AudioSynthNoiseWhite     noise1;         //xy=123,380
+AudioFilterStateVariable filter2;        //xy=145,286
+AudioEffectEnvelope      envelope1;      //xy=277,144
+AudioSynthSimpleDrum     drum2;          //xy=284,93
+AudioEffectEnvelope      envelope2;      //xy=297,238
+AudioSynthSimpleDrum     drum1;          //xy=306,29
+AudioMixer4              mixer1;         //xy=467,97
+AudioMixer4              mixer2;         //xy=471,215
+AudioEffectDelay         delay1;         //xy=671,286
+AudioMixer4              mixer3;         //xy=674,147
+AudioAnalyzePeak         peak1;          //xy=826,38
+AudioAmplifier           amp1;           //xy=856,146
+AudioOutputAnalog        dac1;           //xy=891,204
 AudioConnection          patchCord1(waveform1, 0, filter1, 0);
-AudioConnection          patchCord2(drum2, 0, mixer1, 1);
-AudioConnection          patchCord3(filter1, 0, envelope1, 0);
-AudioConnection          patchCord4(drum1, 0, mixer1, 0);
+AudioConnection          patchCord2(filter1, 0, envelope1, 0);
+AudioConnection          patchCord3(noise1, 0, filter2, 0);
+AudioConnection          patchCord4(filter2, 0, envelope2, 0);
 AudioConnection          patchCord5(envelope1, 0, mixer1, 2);
-AudioConnection          patchCord6(delay1, 0, mixer1, 3);
-AudioConnection          patchCord7(mixer1, delay1);
-AudioConnection          patchCord8(mixer1, amp1);
-AudioConnection          patchCord9(mixer1, peak1);
-AudioConnection          patchCord10(amp1, dac1);
+AudioConnection          patchCord6(drum2, 0, mixer1, 1);
+AudioConnection          patchCord7(envelope2, 0, mixer2, 0);
+AudioConnection          patchCord8(drum1, 0, mixer1, 0);
+AudioConnection          patchCord9(mixer1, 0, mixer3, 0);
+AudioConnection          patchCord10(mixer2, 0, mixer3, 1);
+AudioConnection          patchCord11(delay1, 0, mixer3, 2);
+AudioConnection          patchCord12(mixer3, amp1);
+AudioConnection          patchCord13(mixer3, delay1);
+AudioConnection          patchCord14(mixer3, peak1);
+AudioConnection          patchCord15(amp1, dac1);
 // GUItool: end automatically generated code
 
 //led biz begin
@@ -89,6 +98,11 @@ int button3_pin = 4;
 int button4_pin = 6;
 float peak_reading;
 
+int hat_seq[16] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1,};
+int drum_seq[16] = {2, 0, 1, 0, 2, 1, 0, 0, 0, 0, 1, 0, 1, 2, 1,};
+int seq_index;
+int prev_seq_index;
+
 #include <Bounce2.h>
 #define BOUNCE_LOCK_OUT
 
@@ -131,6 +145,10 @@ void setup() {
   drum2.length(500);
   drum2.pitchMod(.1);
 
+  noise1.amplitude(1);
+  filter2.frequency(12000.0);
+  filter2.resonance(0.7); //.7 means no extra resonance
+
   //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
   // This envelope is an amalpifer that we can open and close over a certain amount of time
   envelope1.attack(250); //time in milliseconds to rise to full amplitude
@@ -138,11 +156,24 @@ void setup() {
   envelope1.sustain(1); //amplitude 0-1.0
   envelope1.release(1000);//time in milliseconds for fade from sustain amplitude to 0
 
+  //for noise hi-hat
+  envelope2.attack(1); //time in milliseconds to rise to full amplitude
+  envelope2.decay(20); //time in milliseconds to fall to sustain amplitude
+  envelope2.sustain(0); //amplitude 0-1.0
+  envelope2.release(1);//can't be 0
+
   // If you go over "1" in total amplitude The top or bottom of the wave is just slammed against a wall
-  mixer1.gain(0, .3); //drum 1
-  mixer1.gain(1, .3); //drum 2
-  mixer1.gain(2, .3); //waveform1 into filter
-  mixer1.gain(3, 0); //delay feedback
+  mixer1.gain(0, .25); //drum 1
+  mixer1.gain(1, .25); //drum 2
+  mixer1.gain(2, .25); //waveform1 into filter
+  mixer1.gain(3, 0); //nothing
+
+  mixer2.gain(0, .3); //noise
+  mixer2.gain(1, 0); //nothing
+
+  mixer3.gain(0, 1); //from mixer 1
+  mixer3.gain(1, 1); //from mixer 2
+  mixer3.gain(2, 0); //feedback
 
   // these only equal .8 in total gain but since there's feedback we wan't to be cautious
 
@@ -184,7 +215,6 @@ void loop() {
 
   if (debouncer2.fell() ) {
     drum2.noteOn();
-
   }
 
   if (debouncer3.fell() ) {
@@ -192,6 +222,11 @@ void loop() {
   }
   if (debouncer3.rose() ) {
     envelope1.noteOff();
+  }
+
+
+  if (debouncer4.fell() ) {
+    envelope2.noteOn();
   }
 
   //since we can hear faster than we can see (?) we want to update these much more quickly
@@ -205,7 +240,7 @@ void loop() {
   //map can't do floats (some versions of arduino can) so we divide by 100.0
 
   feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
-  mixer1.gain(3, feedback_amount); //delay feedback
+  mixer3.gain(2, feedback_amount); //delay feedback
 
   //final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
   amp1.gain(1);
@@ -221,6 +256,25 @@ void loop() {
 
   filter1_freq = wave1_freq * (((analogRead(A4) / 1023.0) * 3.0) + 1.0);
   filter1.frequency(filter1_freq);
+
+  if (current_time - prev[2] > 100) {
+    prev[2] = current_time;
+
+    prev_seq_index = seq_index;
+    seq_index++;
+    if (seq_index > 15) {
+      seq_index = 0;
+    }
+    if (drum_seq[seq_index] == 1) {
+      drum1.noteOn();
+    }
+    if (drum_seq[seq_index] == 2) {
+      drum2.noteOn();
+    }
+    if (hat_seq[seq_index] == 1) {
+      envelope2.noteOn();
+    }
+  }
 
 
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
