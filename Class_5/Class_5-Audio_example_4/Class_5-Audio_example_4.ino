@@ -1,5 +1,6 @@
-// Getting started with audio
-// Added envelope and and chromatic tuning to waveform 1
+// Example using a waveform with filter and envelope, two drum objects, and delay effect
+// waveform frequency is set using array of chromatic notes
+// 
 
 /*
   pots:
@@ -144,7 +145,6 @@ void setup() {
   mixer1.gain(2, .3); //waveform1 into filter
   mixer1.gain(3, 0); //delay feedback
 
-  // these only equal .8 in total gain but since there's feedback we wan't to be cautious
 
   //https://www.pjrc.com/teensy/gui/?info=AudioEffectDelay
   delay1.delay(0, 350); //channel, delay time in ms
@@ -184,14 +184,13 @@ void loop() {
 
   if (debouncer2.fell() ) {
     drum2.noteOn();
-
   }
 
   if (debouncer3.fell() ) {
-    envelope1.noteOn();
+    envelope1.noteOn(); 
   }
   if (debouncer3.rose() ) {
-    envelope1.noteOff();
+    envelope1.noteOff();  //the standard envelope needs an on and off, otherwise it will stay on 
   }
 
   //since we can hear faster than we can see (?) we want to update these much more quickly
@@ -202,33 +201,44 @@ void loop() {
   drum2_freq = drum1_freq * 2.0;
   drum2.frequency(drum2_freq);
 
-  //map can't do floats (some versions of arduino can) so we divide by 100.0
 
+  //map can't do floats (some versions of arduino can) so we divide by 100.0
   feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
   mixer1.gain(3, feedback_amount); //delay feedback
 
-  //final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
+  final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
   amp1.gain(1);
 
   float drum_mod = analogRead(A2) / 1023.0; //0.0-1.0
   drum1.pitchMod(drum_mod);
 
-  note_select = map(analogRead(A3), 0, 1023, 30, 60);
-  wave1_freq = chromatic[note_select];
-  //wave1_freq = map(touchRead(0), 1000, 8000, 0, 2500);
+  //now goes from 30-59 try different numbers of different ranges of notes
+  note_select = map(analogRead(A3), 0, 1023, 30, 60); 
+  //use note_select to select a place in the chromatic array. This returns the actual frequency
+  wave1_freq = chromatic[note_select]; 
+  // then change the oscillator to this new frequency
   waveform1.frequency(wave1_freq);
 
 
-  filter1_freq = wave1_freq * (((analogRead(A4) / 1023.0) * 3.0) + 1.0);
+  //the filter's frequency needs to change with the waveforms so it will
+  // always filter out the same amount of harmonics, no matter the frequency played
+  // were we read the pot, get it to 0-1.0 by dividing by it's top value
+  // then we multiply by 3 so it's 0-3.0 then at 1 so it never gos below wave1_freq
+  // 3 is picked arbitrarily and give a good range
+  filter1_freq = wave1_freq * (((analogRead(A4) / 1023.0) * 3.0) + 1.0); //1.0-4.0
   filter1.frequency(filter1_freq);
 
 
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
+    // peak returns the highest amplitude since it was last checked. 0-1.0
+    // First you need to ask if it's ready
     if (peak1.available()) {
+      //since map won't work on floats we turn 0-1.0 to 0-100
+      // then we can map it to 8-0 since the bottom of the screen is line 7
+      // this means 0 reading won't show up on the screen and 0 will be the loudest
       peak_reading = map((peak1.read() * 100.0), 0, 100, 8, 0);
-      //peak_reading = peak1.read()*100.0;
     }
     Serial.println(peak_reading);
 
@@ -240,7 +250,7 @@ void loop() {
         if (1) { //this will happen
           //draw lines coming from the bottom
           if (y_count >= peak_reading) {
-            float hue = y_count / 10.0; //each row will be a diff color
+            float hue = y_count / 10.0; //each row will be a different color
             set_pixel(xy_count, hue , .9, 1);
           }
         }
@@ -249,7 +259,7 @@ void loop() {
     leds.show(); // after we've set what we want all the LEDs to be we send the data out through this function
   }
 
-  if (current_time - prev[1] > 500  && 0) {
+  if (current_time - prev[1] > 500  && 0) { //change to && 1 to turn this on
     prev[1] = current_time;
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.

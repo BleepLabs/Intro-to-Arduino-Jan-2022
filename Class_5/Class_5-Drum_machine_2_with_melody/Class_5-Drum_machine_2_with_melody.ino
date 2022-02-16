@@ -1,10 +1,11 @@
-// Getting started with audio
-// Added envelope and and chromatic tuning to waveform 1
+// Using arrays to play back sequences 
+// Uses three mixers so you can add more sounds 
+// "hi-hat" sound added
 
 /*
   pots:
   drum pitch     feedback amount      master volume
-      waveform freq        filter freqeuncy
+      waveform freq        filter frequency
 
   buttons:
   falling drum    rising drum   waveform envelope  not used
@@ -98,9 +99,11 @@ int button3_pin = 4;
 int button4_pin = 6;
 float peak_reading;
 
+//arrays holding our sequences and melodies
 int hat_seq[16] = {1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 1, 0,  1, 0, 1, 0};
 int drum_seq[16] = {2, 0, 1, 0,  2, 1, 0, 0,  0, 0, 1, 0,  1, 2, 1, 0};
 int melody_seq[16] = {40, 43, 47, 0,  0, 0, 0, 0,  52, 40, 28, 0,  0, 0, 0, 0};
+int note_on_length=250; //How long to have the envelope gate on for each note
 
 int seq_index;
 int prev_seq_index;
@@ -148,12 +151,12 @@ void setup() {
   drum2.length(500);
   drum2.pitchMod(.1);
 
-  noise1.amplitude(1);
-  filter2.frequency(12000.0);
+  noise1.amplitude(1); 
+  filter2.frequency(12000.0); //filter for white noise
   filter2.resonance(0.7); //.7 means no extra resonance
 
   //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
-  // This envelope is an amalpifer that we can open and close over a certain amount of time
+  // This envelope is an amplifier that we can open and close over a certain amount of time
   envelope1.attack(1); //time in milliseconds to rise to full amplitude
   envelope1.decay(200); //time in milliseconds to fall to sustain amplitude
   envelope1.sustain(.5); //amplitude 0-1.0
@@ -229,7 +232,7 @@ void loop() {
 
 
   if (debouncer4.fell() ) {
-    envelope2.noteOn();
+    envelope2.noteOn(); //hi hat 
   }
 
   //since we can hear faster than we can see (?) we want to update these much more quickly
@@ -279,7 +282,10 @@ void loop() {
         envelope2.noteOn();
       }
       if (melody_seq[seq_index] > 0) {
+        //remember what time it is so we can turn off the envelope after
+        // a set amount of millis have passed. 
         note_off_time=current_time;
+        //the array hols note numbers so we need to turn those into frequencies 
         wave1_freq = chromatic[melody_seq[seq_index]];
         waveform1.frequency(wave1_freq);
         envelope1.noteOn();
@@ -289,7 +295,8 @@ void loop() {
     }
   }
 
-  if (current_time-note_off_time>250){
+  if (current_time-note_off_time>note_on_length){
+    //turn the note off "note_on_length" millis after the envelope was turned on
     envelope1.noteOff();
   }
 
