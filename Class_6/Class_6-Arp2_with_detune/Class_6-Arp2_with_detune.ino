@@ -3,11 +3,11 @@
 
 /*
   pots:
-  drum pitch     feedback amount      master volume
-      waveform freq        filter freqeuncy
+  arp rate     feedback amount      master volume
+      detune        arp scale
 
   buttons:
-  falling drum    rising drum   waveform envelope  not used
+  hold to play       not used
 */
 
 
@@ -189,7 +189,7 @@ void setup() {
 int arp_enable;
 int arp_rate;
 unsigned long note_off_timer;
-int note_length = 500;
+int note_length = 100;
 int arp_index;
 int arp_mode;
 int arp_latch;
