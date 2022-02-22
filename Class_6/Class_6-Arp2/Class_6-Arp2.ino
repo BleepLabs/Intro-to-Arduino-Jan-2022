@@ -191,6 +191,9 @@ int arp_rate;
 unsigned long note_off_timer;
 int note_length = 100;
 int arp_index;
+int arp_mode;
+int arp_latch;
+int scale_select;
 
 
 void loop() {
@@ -226,25 +229,49 @@ void loop() {
   waveform1.frequency(wave1_freq);
   waveform2.frequency(wave1_freq * 2.0);
 
-  filter1_freq = wave1_freq * (((analogRead(A4) / 1023.0) * 3.0) + 1.0); //1.0-4.0
+  //filter1_freq = wave1_freq * (((analogRead(A4) / 1023.0) * 3.0) + 1.0); //1.0-4.0
+  filter1_freq = wave1_freq * 4;
   filter1.frequency(filter1_freq);
   filter2.frequency(filter1_freq * 2.0);
 
   arp_rate = map(analogRead(A0), 0, 1023, 10, 1000);
 
+  scale_select = map(analogRead(A4), 0, 1023, 0, 4);
+
   if (current_time - prev[2] > arp_rate) {
     prev[2] = current_time;
-
+    Serial.println(scale_select);
     if (arp_enable == 1) {
 
-      wave1_freq = chromatic[major[arp_index + note_select]];
+      if (scale_select == 0) {
+        wave1_freq = chromatic[major[arp_index + note_select]];
+      }
+      if (scale_select == 1) {
+        wave1_freq = chromatic[minor[arp_index + note_select]];
+      }
+      if (scale_select == 2) {
+        wave1_freq = chromatic[diminished[arp_index + note_select]];
+      }
+      if (scale_select == 3) {
+        wave1_freq = chromatic[arp_index + note_select];
+      }
       envelope1.noteOn();
       envelope2.noteOn();
       note_off_timer = current_time;
 
-      arp_index++;
-      if (arp_index > 7) {
+      if (arp_index > 11) {
+        arp_latch = 0;
+        arp_index = 11;
+      }
+      if (arp_index <= 0 ) {
+        arp_latch = 1;
         arp_index = 0;
+      }
+      if (arp_latch == 1) {
+        arp_index++;
+      }
+      if (arp_latch == 0) {
+        arp_index -= 3;
       }
     }
 
