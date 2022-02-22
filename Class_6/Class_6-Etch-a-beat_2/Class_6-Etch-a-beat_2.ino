@@ -4,11 +4,11 @@
 
 /*
   pots:
-  drum pitch     feedback amount      master volume
+  X pos     y pos      master volume
       seuencer rate        filter frequency
 
   buttons:
-  falling drum    rising drum   waveform envelope  not used
+  create note    erase_note   waveform envelope  not used
 */
 
 
@@ -110,6 +110,7 @@ int seq_index;
 int prev_seq_index;
 unsigned long note_off_time;
 int drum_led, hat_led;
+int rec_note, erase_note;
 
 #include <Bounce2.h>
 #define BOUNCE_LOCK_OUT
@@ -218,11 +219,11 @@ void loop() {
   debouncer4.update();
 
   if (debouncer1.fell()) {
-    drum1.noteOn();
+    rec_note = 1;
   }
 
   if (debouncer2.fell() ) {
-    drum2.noteOn();
+    erase_note = 1;
   }
 
   if (debouncer3.fell() ) {
@@ -239,15 +240,39 @@ void loop() {
   //since we can hear faster than we can see (?) we want to update these much more quickly
   // so they are not in the timing if. We'll talk about ways to smooth the readings later
 
-  drum1_freq = analogRead(A0); //0-1023
-  drum1.frequency(drum1_freq);
-  drum2_freq = drum1_freq * 2.0;
-  drum2.frequency(drum2_freq);
+  x_pot = map(analogRead(A0), 0, 1023, 0, 7); //map to just 0-7 to select the column...
+  //" 7- " flips it so turing right goes up. chancing the map doesnt work as well.
+  y_pot = 7 - map(analogRead(A1), 0, 1023, 0, 7);
+  xy_sel = x_pot + (y_pot * 8); //both of these are combined to set the exact pixel from 0-63
+
+  if (rec_note == 1) {
+    rec_note = 0;
+    if (xy_sel < 16) {
+      drum_seq[xy_sel] = 1;
+    }
+    if (xy_sel >= 16 && xy_sel < 16 * 2) {
+      hat_seq[xy_sel - 16] = 1;
+    }
+  }
+  if (erase_note == 1) {
+    erase_note = 0;
+    if (xy_sel < 16) {
+      drum_seq[xy_sel] = 0;
+    }
+    if (xy_sel >= 16 && xy_sel < 16 * 2) {
+      hat_seq[xy_sel - 16] = 0;
+    }
+  }
+
+  //  drum1_freq = analogRead(A0); //0-1023
+  drum1.frequency(440);
+  //  drum2_freq = drum1_freq * 2.0;
+  drum2.frequency(220);
 
   //map can't do floats (some versions of arduino can) so we divide by 100.0
 
-  feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
-  mixer3.gain(2, feedback_amount); //delay feedback
+  //  feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
+  mixer3.gain(2, 0); //delay feedback
 
   //final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
   amp1.gain(1);
@@ -305,6 +330,8 @@ void loop() {
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
+
+
     for (int j = 0; j < 63; j++) {
       if (j < 16) {
         seq_leds[j] = drum_seq[j];
@@ -343,6 +370,9 @@ void loop() {
         }
         if (xy_count == seq_index + 32) {
           set_pixel(xy_count, 0 , 0, 1);
+        }
+        if (xy_count == xy_sel) {
+          set_pixel(xy_count, .3 , 1, 1);
         }
       }
     }
