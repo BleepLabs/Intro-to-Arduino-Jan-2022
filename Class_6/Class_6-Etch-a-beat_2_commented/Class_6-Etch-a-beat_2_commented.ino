@@ -1,6 +1,8 @@
-// Using arrays to play back sequences
-// Uses three mixers so you can add more sounds
-// "hi-hat" sound added
+// Two drums, a noise hihatm ans a melody are played using sequences
+// Sequences are displayed on the screen and the controls can edit them
+// except for the melody, that hasn't been implemented yet. It will jsut play a low note if you draw a new dot therer
+// press the 4th button to get it playing 
+// 
 
 /*
   pots:
@@ -8,7 +10,7 @@
       seuencer rate        filter frequency
 
   buttons:
-  create note    erase_note   waveform envelope  not used
+  create note    erase_note   waveform envelope  start and stop sequence
 */
 
 
@@ -111,6 +113,7 @@ int prev_seq_index;
 unsigned long note_off_time;
 int drum_led, hat_led;
 int rec_note, erase_note;
+int seq_enable;
 
 #include <Bounce2.h>
 #define BOUNCE_LOCK_OUT
@@ -174,7 +177,7 @@ void setup() {
   // If you go over "1" in total amplitude The top or bottom of the wave is just slammed against a wall
   mixer1.gain(0, .25); //drum 1
   mixer1.gain(1, .25); //drum 2
-  mixer1.gain(2, 0); //waveform1 into filter
+  mixer1.gain(2, .25); //waveform1 into filter
   mixer1.gain(3, 0); //nothing
 
   mixer2.gain(0, .25); //noise
@@ -184,7 +187,6 @@ void setup() {
   mixer3.gain(1, 1); //from mixer 2
   mixer3.gain(2, 0); //feedback
 
-  // these only equal .8 in total gain but since there's feedback we wan't to be cautious
 
   //https://www.pjrc.com/teensy/gui/?info=AudioEffectDelay
   delay1.delay(0, 350); //channel, delay time in ms
@@ -234,7 +236,11 @@ void loop() {
   }
 
   if (debouncer4.fell() ) {
-    envelope2.noteOn(); //hi hat
+    seq_enable = !seq_enable;
+    prev[2] = 0; //so the sequence will start right when you press the button
+    seq_index = 0; //so the sequence starts at the beginning
+    // Its not  necessary to reset both of these when turing the sequence off but there no need to make it more complicated
+
   }
 
   //since we can hear faster than we can see (?) we want to update these much more quickly
@@ -270,15 +276,14 @@ void loop() {
   drum2.frequency(220);
 
   //map can't do floats (some versions of arduino can) so we divide by 100.0
-
   //  feedback_amount = map(analogRead(A1), 0, 1023.0, 0, 150) / 100.0; //0-1.5
   mixer3.gain(2, 0); //delay feedback
 
-  //final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
-  amp1.gain(1);
+  final_output_level = map(analogRead(A2), 0, 1023.0, 0, 100) / 100.0; //if we don't want it to go over a certain level we can just cahnge the last value in map
+  amp1.gain(final_output_level);
 
-  float drum_mod = analogRead(A2) / 1023.0; //0.0-1.0
-  drum1.pitchMod(drum_mod);
+  //float drum_mod = analogRead(A2) / 1023.0; //0.0-1.0
+  drum1.pitchMod(.7);
 
   //note_select = map(analogRead(A3), 0, 1023, 30, 60);
   //wave1_freq = chromatic[note_select];
@@ -290,15 +295,10 @@ void loop() {
 
   seq_rate = map(analogRead(A3), 0, 1023, 10, 1000);
 
-  if (1) {
+  if (seq_enable == 1) {
     if (current_time - prev[2] > seq_rate) {
       prev[2] = current_time;
 
-      prev_seq_index = seq_index;
-      seq_index++;
-      if (seq_index > 15) {
-        seq_index = 0;
-      }
       if (drum_seq[seq_index] == 1) {
         drum1.noteOn();
       }
@@ -317,6 +317,14 @@ void loop() {
         waveform1.frequency(wave1_freq);
         envelope1.noteOn();
       }
+
+      //this is after we check the arrays and play the notes so we always start on 0
+      prev_seq_index = seq_index;
+      seq_index++;
+      if (seq_index > 15) {
+        seq_index = 0;
+      }
+
     }
   }
 
@@ -330,14 +338,17 @@ void loop() {
   if (current_time - prev[0] > 33) { //33 millis is about 30Hz, aka fps
     prev[0] = current_time;
 
-
-
+    //we were having issues displaying all the arrays directly on the screen because it's
+    // tricky to address pixes that are higher than xy_count.
+    // if you try and set xy_count+5 to be on if will be eares when xy_count actually gets to that value
+    // so one solution was to make another array we put all the seq arrays in and then displayed that
+    // we could alst use this to make the dots diffent colors as showin in the j<16 part
     for (int j = 0; j < 63; j++) {
       if (j < 16) {
-        seq_leds[j] = drum_seq[j];
+        seq_leds[j] = drum_seq[j] * 1000; //no note or anything will be 1000 or 2000 so we can use it to set special colors for the drums
       }
       if (j >= 16 && j < 16 * 2) {
-        seq_leds[j] = hat_seq[j - 16];
+        seq_leds[j] = hat_seq[j - 16] * 3000;  //no note or anything will be 3000 so we can use it to set special colors for the hat
       }
       if (j >= 16 * 2 && j < 16 * 3) {
         seq_leds[j] = melody_seq[j - 32];
@@ -358,10 +369,25 @@ void loop() {
         int final_leds = seq_leds[xy_count];
 
         if (final_leds != 0) {
-          float hue = final_leds / 60.0; //each row will be a diff color
-          set_pixel(xy_count, hue , .9, 1);
+          if (final_leds < 1000) { // drms and hat start at 1000 now. Notes are jsut as they are played
+            float hue = final_leds / 60.0; //each row will be a diff color
+            set_pixel(xy_count, hue , .9, 1);
+          }
+          if (final_leds == 1000) { // drums and hat start at 1000 now. Notes are jsut as they are played
+            float hue = 0;
+            set_pixel(xy_count, hue , .75, 1); //changed saturation
+          }
+          if (final_leds == 2000) { 
+            float hue = .1;
+            set_pixel(xy_count, hue , .75, 1); //changed saturation
+          }
+          if (final_leds == 3000) { 
+            float hue = .2;
+            set_pixel(xy_count, hue , .75, 1); //changed saturation
+          }
         }
-
+        
+        //Display the three sequence indexes
         if (xy_count == seq_index) {
           set_pixel(xy_count, 0 , 0, 1);
         }
@@ -371,6 +397,7 @@ void loop() {
         if (xy_count == seq_index + 32) {
           set_pixel(xy_count, 0 , 0, 1);
         }
+        //dispay the cursor
         if (xy_count == xy_sel) {
           set_pixel(xy_count, .3 , 1, 1);
         }
@@ -431,36 +458,36 @@ void set_pixel(int pixel, float fh, float fs, float fv) {
   byte tv = v * (256 - s * fInv / 256) / 256;
 
   switch (i) {
-    case 0:
-      RedLight = v;
-      GreenLight = tv;
-      BlueLight = pv;
-      break;
-    case 1:
-      RedLight = qv;
-      GreenLight = v;
-      BlueLight = pv;
-      break;
-    case 2:
-      RedLight = pv;
-      GreenLight = v;
-      BlueLight = tv;
-      break;
-    case 3:
-      RedLight = pv;
-      GreenLight = qv;
-      BlueLight = v;
-      break;
-    case 4:
-      RedLight = tv;
-      GreenLight = pv;
-      BlueLight = v;
-      break;
-    case 5:
-      RedLight = v;
-      GreenLight = pv;
-      BlueLight = qv;
-      break;
+  case 0:
+    RedLight = v;
+    GreenLight = tv;
+    BlueLight = pv;
+    break;
+  case 1:
+    RedLight = qv;
+    GreenLight = v;
+    BlueLight = pv;
+    break;
+  case 2:
+    RedLight = pv;
+    GreenLight = v;
+    BlueLight = tv;
+    break;
+  case 3:
+    RedLight = pv;
+    GreenLight = qv;
+    BlueLight = v;
+    break;
+  case 4:
+    RedLight = tv;
+    GreenLight = pv;
+    BlueLight = v;
+    break;
+  case 5:
+    RedLight = v;
+    GreenLight = pv;
+    BlueLight = qv;
+    break;
   }
   leds.setPixelColor(pixel, RedLight, GreenLight, BlueLight);
 }
