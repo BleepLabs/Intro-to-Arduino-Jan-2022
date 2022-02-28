@@ -9,6 +9,8 @@
   C - 19 I2C clock
   + - 3.3V
 
+  photo of connections https://raw.githubusercontent.com/BleepLabs/Intro-to-Arduino-Jan-2022/main/Documents/accelerometer-wires.jpg
+
 */
 
 //these must be included for the accelo to work.
