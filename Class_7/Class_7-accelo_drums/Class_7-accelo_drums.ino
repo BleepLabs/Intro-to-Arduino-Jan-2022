@@ -191,7 +191,13 @@ void loop() {
 
   if (current_time - prev[2] > 1) {
     prev[2] = current_time;
-    follow1 *= .99;
+    follow1 *= .995;
+    //follow1 -= 1;
+    if (follow1 < 0) {
+      follow1 = 0;
+    }
+    filter1_freq = map(follow1, 444, 1000, 0, 15000);
+    filter1.frequency(filter1_freq);
 
   }
 
@@ -229,15 +235,14 @@ void loop() {
   //wave1_freq = map(touchRead(0), 1000, 8000, 0, 2500);
   waveform1.frequency(wave1_freq);
 
-  filter1_freq = analogRead(A4) * 4.0;
-  filter1.frequency(filter1_freq);
+  //filter1_freq = analogRead(A6) * 4.0;
 
   //turn the wavefrom off basically if the filter is low
   if (filter1_freq < 100) {
-    mixer1.gain(2, 0);
+    // mixer1.gain(2, 0);
   }
   else {
-    mixer1.gain(2, .2);
+    // mixer1.gain(2, .2);
   }
 
 
@@ -259,7 +264,7 @@ void loop() {
 
     Serial.print(follow1);
     Serial.print(" ");
-    Serial.println(x_read);
+    Serial.println(filter1_freq);
 
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.
