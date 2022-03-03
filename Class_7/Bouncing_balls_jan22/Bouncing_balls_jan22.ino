@@ -279,6 +279,7 @@ void loop() {
     if (tc > trail_max) {
       tc = 0;
     }
+    
     trails[0][tc] = xy1;
     trails[1][tc] = xy2;
     for (byte i = 1; i < trail_max - 1; i++) {
